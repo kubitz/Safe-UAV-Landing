@@ -116,7 +116,17 @@ risk_table = dict([
     (Label.conflicting, RiskLevel.MEDIUM)
 ])
 
+def getDistance(img,pt):
+    """Finds Normalised Distance between a given point and center of frame.
 
+    Args:
+        img (cv2 Frame): image where the point resides
+        pt (array): point in the form [x,y]
+    """
+    dim=img.shape
+    furthestDistance=math.hypot(dim[0]/2,dim[1]/2)
+    distance=math.dist(pt,[dim[0]/2,dim[1]/2])
+    return abs(distance/furthestDistance)
 
 def circles_intersect(x1,x2,y1,y2,r1,r2):
     """Checks if two circle intersect
@@ -244,17 +254,30 @@ def get_risk_map(seg_img, gaussian_sigma=25):
     risk_array=np.uint8(risk_array)
     return risk_array
 
-def _risk_map_eval_basic(img):
-    return np.sum(img)
+def _risk_map_eval_basic(img,areaLz):
+    """Evaluate normalised risk in a landing zone
+
+    Args:
+        img(risk map)): risk map containin pixels between 0 and 255
+
+    Returns:
+        float: float between 0.0 and 1.0
+    """
+    maxRisk=areaLz*255
+    totalRisk=np.sum(img)
+    return totalRisk/maxRisk
 
 def rank_lzs(lzs_proposals,risk_map):
     lzs_processed=[]
     for lz in lzs_proposals:
         mask = np.zeros_like(risk_map)
         mask = cv.circle(mask, (lz[0],lz[1]), lz[2], (255,255,255), -1)
+        areaLz=math.pi* lz[2]*lz[2]
         crop = cv.bitwise_and(risk_map, mask)
-        risk=_risk_map_eval_basic(crop)
-        lzs_processed.append((lz, risk))
+        riskFactor=_risk_map_eval_basic(crop,areaLz)
+        distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
+        score=(3*riskFactor+distanceFactor)
+        lzs_processed.append((lz, score))
     lzs_processed.sort(key=lambda tup: tup[1])
     lzs_sorted, risk_sorted = zip(*lzs_processed)
     return lzs_sorted
