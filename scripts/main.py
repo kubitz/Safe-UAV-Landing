@@ -248,7 +248,8 @@ def get_risk_map_slow(seg_img, windowsize, gaussian_sigma=7):
     return img
 
 def get_risk_map(seg_img, gaussian_sigma=25):
-    image,_,_ = cv.split(seg_img)
+    #image,_,_ = cv.split(seg_img)
+    image=seg_img
     risk_array = image.astype('float32')
     for label in Label:
         np.where(risk_array==label.value, risk_table[label].value, risk_array)
@@ -328,11 +329,16 @@ def main():
 
         img = cv.imread(rgbImgs[i])
         height, width = img.shape[:2]
-
-        #segImgxx=segEngine.inferImage(fileName)
+        img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        img_pil = Image.fromarray(img_pil)
+        img_pil = img_pil.resize((1152, 768), Image.ANTIALIAS)
+        segImgxx=segEngine.inferImage(img_pil)
+        segImg=segEngine.maskToPIL(segImgxx)
+        segImg=segImg.resize((width, height),Image.ANTIALIAS)
+        segImg = numpy.array(segImg) 
         _, objs=objectDetector.infer_image(height, width, img)
         img = cv.imread(rgbImgs[i])
-        seg_img = cv.imread(segImgs[i])
+        #seg_img = cv.imread(segImgs[i])
         obstacles=[]
         for obstacle in objs:
             print(obstacle)
@@ -343,7 +349,7 @@ def main():
         #seg_img = cv.imread(segImgs[i])
         image=img.copy()
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
-        risk_map=get_risk_map(seg_img)
+        risk_map=get_risk_map(segImg)
 
         #cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
         cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
