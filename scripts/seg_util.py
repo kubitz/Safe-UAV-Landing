@@ -29,7 +29,11 @@ class SegmentationEngine():
         maskNp=mask.numpy()
         img = Image.fromarray(np.uint8(maskNp) , 'L')   
         return img
-
+    
+    def maskToCV(self,mask):
+        maskNp=mask.numpy()
+        img = Image.fromarray(np.uint8(maskNp) , 'L')   
+        return img
 if __name__ == '__main__':
 
     import glob
