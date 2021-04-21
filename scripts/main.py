@@ -278,8 +278,8 @@ def rank_lzs(lzs_proposals,risk_map):
         areaLz=math.pi* lz[2]*lz[2]
         crop = cv.bitwise_and(risk_map, mask)
         riskFactor=_risk_map_eval_basic(crop,areaLz)
-        distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
-        score=(3*riskFactor+distanceFactor)
+        #distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
+        score=(3*riskFactor)
         lzs_processed.append((lz, score))
     lzs_processed.sort(key=lambda tup: tup[1])
     lzs_sorted, risk_sorted = zip(*lzs_processed)
@@ -327,19 +327,22 @@ def main():
         fileName=Path(rgbImgs[i]).stem
 
         img = cv.imread(rgbImgs[i])
-        segImgxx=segEngine.inferImage(fileName)
-        objs=objectDetector.infer_image(fileName)
+        height, width = img.shape[:2]
+
+        #segImgxx=segEngine.inferImage(fileName)
+        _, objs=objectDetector.infer_image(height, width, img)
         img = cv.imread(rgbImgs[i])
         seg_img = cv.imread(segImgs[i])
         obstacles=[]
         for obstacle in objs:
+            print(obstacle)
             posOb=obstacle.get('box')
             minDist=100
             obstacles.append([posOb[0],posOb[1],minDist])
         
         #seg_img = cv.imread(segImgs[i])
         image=img.copy()
-        lzs=get_landing_zones_proposals(seq_obstacles[i],75, 120,image)
+        lzs=get_landing_zones_proposals(obstacles,75, 120,image)
         risk_map=get_risk_map(seg_img)
 
         #cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
@@ -347,7 +350,7 @@ def main():
         #cv.waitKey(0)
 
         lzs_ranked=rank_lzs(lzs,risk_map)
-        image=draw_lzs_obs(lzs_ranked[:5],seq_obstacles[i],img)
+        image=draw_lzs_obs(lzs_ranked[:5],obstacles,img)
         #cv.imshow("best landing zones",img)
         cv.imwrite('/content/Safe-UAV-Landing/data/results/landingZones/'+fileName+'_lzs.jpg',img)
         #cv.waitKey(0)
