@@ -12,6 +12,9 @@ from PIL import Image
 from sklearn.preprocessing import normalize
 from pathlib import Path
 
+from seg_util import SegmentationEngine
+from yolo_util import ObjectDetector
+
 # class Label(Enum):
 #     background=[0,0,0]
 #     person=[1,1,1]
@@ -313,15 +316,28 @@ def main():
     high_risk_obstacles=[(357,328,100), (437,286,100), (992,437,100), (1086,404,100),(927,634,100)]
     high_risk_obstacles=[(643,346,100)]
   #  high_risk_obstacles=[]
+    objectDetector=ObjectDetector('Safe-UAV-Landing/models/yolo-v3/visdrone.names',
+                                '/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
+                                '/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
+    segEngine = SegmentationEngine('/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
 
     i=0
     for i in range(len(segImgs)):
         fileName=Path(rgbImgs[i]).stem
 
         img = cv.imread(rgbImgs[i])
+        segImgxx=segEngine.inferImage(fileName)
+        objs=objectDetector.infer_image(fileName)
+        img = cv.imread(rgbImgs[i])
         seg_img = cv.imread(segImgs[i])
+        obstacles=[]
+        for obstacle in objs:
+            posOb=obstacle.get('box')
+            minDist=100
+            obstacles.append([posOb[0],posOb[1],minDist])
+        
+        #seg_img = cv.imread(segImgs[i])
         image=img.copy()
-
         lzs=get_landing_zones_proposals(seq_obstacles[i],75, 120,image)
         risk_map=get_risk_map(seg_img)
 
