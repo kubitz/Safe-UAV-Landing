@@ -288,14 +288,15 @@ def rank_lzs(lzs_proposals,risk_map):
 
 
 def main():
-    dir= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/segmentation/040005_030.png"
-    dir= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/images/040003_017.jpg"
-    dir= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/images/040004_040.jpg"
-    dir_seg= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/segmentation/040003_017.png"
-    dir_seg= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/segmentation/040004_040.png"
+  
+    dir= r"/content/Safe-UAV-Landing/data/test/segmentation/040005_030.png"
+    dir= r"/content/Safe-UAV-Landing/data/test/images/040003_017.jpg"
+    dir= r"/content/Safe-UAV-Landing/data/test/images/040004_040.jpg"
+    dir_seg= r"/content/Safe-UAV-Landing/data/test/segmentation/040003_017.png"
+    dir_seg= r"/content/Safe-UAV-Landing/data/test/segmentation/040004_040.png"
 
-    segImgs=glob.glob("/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/masks/*.jpg")
-    rgbImgs=glob.glob("/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
+    segImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/masks/*.jpg")
+    rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
     segImgs.sort()
     rgbImgs.sort()
     seq_obstacles=[
@@ -316,10 +317,10 @@ def main():
     high_risk_obstacles=[(357,328,100), (437,286,100), (992,437,100), (1086,404,100),(927,634,100)]
     high_risk_obstacles=[(643,346,100)]
   #  high_risk_obstacles=[]
-    objectDetector=ObjectDetector('Safe-UAV-Landing/models/yolo-v3/visdrone.names',
-                                '/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
-                                '/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
-    segEngine = SegmentationEngine('/home/kubitz/Documents/fyp/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
+    objectDetector=ObjectDetector('/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names',
+                                '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
+                                '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
+    segEngine = SegmentationEngine('/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
 
     i=0
     for i in range(len(segImgs)):
@@ -341,16 +342,16 @@ def main():
         lzs=get_landing_zones_proposals(seq_obstacles[i],75, 120,image)
         risk_map=get_risk_map(seg_img)
 
-        cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
-        cv.imwrite('/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
-        cv.waitKey(0)
+        #cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
+        cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
+        #cv.waitKey(0)
 
         lzs_ranked=rank_lzs(lzs,risk_map)
         image=draw_lzs_obs(lzs_ranked[:5],seq_obstacles[i],img)
-        cv.imshow("best landing zones",img)
-        cv.imwrite('/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/landingZones/'+fileName+'_lzs.jpg',img)
-        cv.waitKey(0)
-        cv.destroyAllWindows()
+        #cv.imshow("best landing zones",img)
+        cv.imwrite('/content/Safe-UAV-Landing/data/results/landingZones/'+fileName+'_lzs.jpg',img)
+        #cv.waitKey(0)
+        #cv.destroyAllWindows()
 #cProfile.run('main()')
 
 
