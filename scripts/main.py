@@ -12,9 +12,11 @@ import numpy as np
 from PIL import Image
 from sklearn.preprocessing import normalize
 from pathlib import Path
-
 from seg_util import SegmentationEngine
 from yolo_util import ObjectDetector
+
+HEADLESS=True
+SAVE_TO_FILE=True
 class Label(Enum):
     unlabeled=0
     pavedArea=1
@@ -270,16 +272,19 @@ def main():
         image=img.copy()
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
         risk_map=get_risk_map(segImg)
-
-        #cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
-        cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
-        #cv.waitKey(0)
         lzs_ranked=rank_lzs(lzs,risk_map)
         image=draw_lzs_obs(lzs_ranked[:5],obstacles,img)
-        #cv.imshow("best landing zones",img)
-        cv.imwrite('/content/Safe-UAV-Landing/data/results/landingZones/'+fileName+'_lzs.jpg',img)
-        #cv.waitKey(0)
-        #cv.destroyAllWindows()
+
+        if SAVE_TO_FILE:
+            cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
+            cv.imwrite('/content/Safe-UAV-Landing/data/results/landingZones/'+fileName+'_lzs.jpg',img)
+        
+        if not HEADLESS:
+            cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
+            cv.waitKey(0)
+            cv.imshow("best landing zones",img)  
+            cv.waitKey(0)
+            cv.destroyAllWindows()
 #cProfile.run('main()')
 
 
