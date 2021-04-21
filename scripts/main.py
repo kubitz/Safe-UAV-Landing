@@ -267,7 +267,8 @@ def main():
             print(obstacle)
             posOb=obstacle.get('box')
             minDist=100
-            obstacles.append([posOb[0],posOb[1],minDist])
+            w, h = posOb[2], posOb[3]
+            obstacles.append([int(posOb[0]+w/2),int(posOb[1]+h/2),minDist])
         
         image=img.copy()
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
