@@ -5,6 +5,7 @@ import subprocess
 import time
 import os
 # code modified from https://github.com/iArunava/YOLOv3-Object-Detection-with-OpenCV
+# weight file hosted at https://f000.backblazeb2.com/file/fypLanding/yolov3_leaky.weights
 
 class ObjectDetector():
     def __init__(self,pathLabels, pathWeights,pathCfg):
@@ -14,8 +15,8 @@ class ObjectDetector():
         # Load the weights and configutation to form the pretrained YOLOv3 model
         self.net = cv.dnn.readNetFromDarknet(pathCfg, pathWeights)
         # Get the output layer names of the model
-        self.layer_names = net.getLayerNames()
-        self.layer_names = [layer_names[i[0] - 1] for i in net.getUnconnectedOutLayers()]
+        self.layer_names = self.net.getLayerNames()
+        self.layer_names = [self.layer_names[i[0] - 1] for i in self.net.getUnconnectedOutLayers()]
 
     def show_image(img):
         cv.imshow('objecDetect',img)
