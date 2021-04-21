@@ -6,6 +6,7 @@ import glob
 import cProfile
 from matplotlib import pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
+from scipy.spatial import distance
 import math
 import numpy as np
 from PIL import Image
@@ -14,35 +15,6 @@ from pathlib import Path
 
 from seg_util import SegmentationEngine
 from yolo_util import ObjectDetector
-
-# class Label(Enum):
-#     background=[0,0,0]
-#     person=[1,1,1]
-#     bike=[2,2,2]
-#     car=[3,3,3]
-#     drone=[4,4,4]
-#     boat=[5,5,5]
-#     animal=[6,6,6]
-#     obstacle=[7,7,7]
-#     construction=[8,8,8]
-#     vegetation=[9,9,9]
-#     road=[10,10,10]
-#     sky=[11,11,11]
-'''
-class Label(Enum):
-    background=0
-    person=1
-    bike=2
-    car=3
-    drone=4
-    boat=5
-    animal=6
-    obstacle=7
-    construction=8
-    vegetation=9
-    road=10
-    sky=11
-'''
 class Label(Enum):
     unlabeled=0
     pavedArea=1
@@ -68,7 +40,6 @@ class Label(Enum):
     arMarker=21
     obstacle=22
     conflicting=23
-
 class RiskLevel(Enum):
     VERY_HIGH=100
     HIGH=20
@@ -76,22 +47,6 @@ class RiskLevel(Enum):
     LOW=5
     ZERO=0
 
-'''
-risk_table = dict([
-    (Label.background, RiskLevel.ZERO),
-    (Label.person, RiskLevel.VERY_HIGH),
-    (Label.bike, RiskLevel.VERY_HIGH),
-    (Label.car, RiskLevel.HIGH),
-    (Label.drone, RiskLevel.HIGH),
-    (Label.boat, RiskLevel.HIGH),
-    (Label.animal, RiskLevel.HIGH),
-    (Label.obstacle, RiskLevel.MEDIUM),
-    (Label.construction, RiskLevel.MEDIUM),
-    (Label.vegetation, RiskLevel.MEDIUM),
-    (Label.road, RiskLevel.MEDIUM),
-    (Label.sky, RiskLevel.ZERO),
-])
-'''
 risk_table = dict([
     (Label.unlabeled, RiskLevel.ZERO),
     (Label.pavedArea, RiskLevel.ZERO),
@@ -128,7 +83,7 @@ def getDistance(img,pt):
     """
     dim=img.shape
     furthestDistance=math.hypot(dim[0]/2,dim[1]/2)
-    distance=math.dist(pt,[dim[0]/2,dim[1]/2])
+    distance=distance.euclidean(pt,[dim[0]/2,dim[1]/2])
     return abs(distance/furthestDistance)
 
 def circles_intersect(x1,x2,y1,y2,r1,r2):
@@ -279,8 +234,8 @@ def rank_lzs(lzs_proposals,risk_map):
         areaLz=math.pi* lz[2]*lz[2]
         crop = cv.bitwise_and(risk_map, mask)
         riskFactor=_risk_map_eval_basic(crop,areaLz)
-        #distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
-        score=(3*riskFactor)
+        distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
+        score=(3*riskFactor+distanceFactor)
         lzs_processed.append((lz, score))
     lzs_processed.sort(key=lambda tup: tup[1])
     lzs_sorted, risk_sorted = zip(*lzs_processed)
@@ -289,56 +244,22 @@ def rank_lzs(lzs_proposals,risk_map):
 
 
 def main():
-  
-    dir= r"/content/Safe-UAV-Landing/data/test/segmentation/040005_030.png"
-    dir= r"/content/Safe-UAV-Landing/data/test/images/040003_017.jpg"
-    dir= r"/content/Safe-UAV-Landing/data/test/images/040004_040.jpg"
-    dir_seg= r"/content/Safe-UAV-Landing/data/test/segmentation/040003_017.png"
-    dir_seg= r"/content/Safe-UAV-Landing/data/test/segmentation/040004_040.png"
-
-    segImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/masks/*.jpg")
     rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
-    segImgs.sort()
-    rgbImgs.sort()
-    seq_obstacles=[
-        [(640,330,100)], 
-        [(643,346,100)], 
-        [(638,365,100)],  
-        [(643,387,100)], 
-        [(645,398,100)],
-        [(642,414,100)],
-        [(640,437,100)],
-        [(638,468,100)],
-        [(643,488,100)],
-        [(640,488,100)]
-    ]
-
-
-    high_risk_obstacles=[(451,675,100), (506,270,100)]
-    high_risk_obstacles=[(357,328,100), (437,286,100), (992,437,100), (1086,404,100),(927,634,100)]
-    high_risk_obstacles=[(643,346,100)]
-  #  high_risk_obstacles=[]
     objectDetector=ObjectDetector('/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names',
                                 '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
                                 '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
     segEngine = SegmentationEngine('/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
 
     i=0
-    for i in range(len(segImgs)):
+    for i in range(len(rgbImgs)):
         fileName=Path(rgbImgs[i]).stem
-
         img = cv.imread(rgbImgs[i])
         height, width = img.shape[:2]
         img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         img_pil = Image.fromarray(img_pil)
-        img_pil = img_pil.resize((1152, 768), Image.ANTIALIAS)
-        segImgxx=segEngine.inferImage(img_pil)
-        segImg=segEngine.maskToPIL(segImgxx)
-        segImg=segImg.resize((width, height),Image.ANTIALIAS)
+        segImg=segEngine.inferImage(img_pil)
         segImg = numpy.array(segImg) 
         _, objs=objectDetector.infer_image(height, width, img)
-        img = cv.imread(rgbImgs[i])
-        #seg_img = cv.imread(segImgs[i])
         obstacles=[]
         for obstacle in objs:
             print(obstacle)
@@ -346,7 +267,6 @@ def main():
             minDist=100
             obstacles.append([posOb[0],posOb[1],minDist])
         
-        #seg_img = cv.imread(segImgs[i])
         image=img.copy()
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
         risk_map=get_risk_map(segImg)
@@ -354,7 +274,6 @@ def main():
         #cv.imshow("best landing zones",cv.applyColorMap(risk_map, cv.COLORMAP_JET))
         cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
         #cv.waitKey(0)
-
         lzs_ranked=rank_lzs(lzs,risk_map)
         image=draw_lzs_obs(lzs_ranked[:5],obstacles,img)
         #cv.imshow("best landing zones",img)
