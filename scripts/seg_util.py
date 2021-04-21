@@ -14,7 +14,7 @@ class SegmentationEngine():
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def inferImage(self,img, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
-        height, width = img.shape[:2]
+        width, height = img.size
         img = img.resize((1152, 768), Image.ANTIALIAS)        
         self.net.eval()
         t = T.Compose([T.ToTensor(), T.Normalize(mean, std)])

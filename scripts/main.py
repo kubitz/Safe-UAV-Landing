@@ -85,8 +85,8 @@ def getDistance(img,pt):
     """
     dim=img.shape
     furthestDistance=math.hypot(dim[0]/2,dim[1]/2)
-    distance=distance.euclidean(pt,[dim[0]/2,dim[1]/2])
-    return abs(distance/furthestDistance)
+    dist=distance.euclidean(pt,[dim[0]/2,dim[1]/2])
+    return abs(dist/furthestDistance)
 
 def circles_intersect(x1,x2,y1,y2,r1,r2):
     """Checks if two circle intersect
