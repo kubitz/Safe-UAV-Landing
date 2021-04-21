@@ -326,8 +326,9 @@ def main():
         fileName=Path(rgbImgs[i]).stem
 
         img = cv.imread(rgbImgs[i])
+        height, width = img.shape[:2]
         segImgxx=segEngine.inferImage(fileName)
-        objs=objectDetector.infer_image(fileName)
+        _,objs=objectDetector.infer_image(height, width,fileName)
         img = cv.imread(rgbImgs[i])
         seg_img = cv.imread(segImgs[i])
         obstacles=[]
