@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import torch
 from PIL import Image
 from pathlib import Path
+from torchvision import transforms as T
+import torchvision
+import segmentation_models_pytorch as smp
 #weight file hosted at https://f000.backblazeb2.com/file/fypLanding/Unet-Mobilenet.pt
 
 class SegmentationEngine():
@@ -30,8 +33,8 @@ class SegmentationEngine():
 if __name__ == '__main__':
 
     import glob
-    IMAGE_DIR = '/ext_files/segmentation-trained/testSequence/seq1/*.jpg'
-    pathWeights=''
+    IMAGE_DIR = '/content/Safe-UAV-Landing/data/test/images/*.jpg'
+    pathWeights='/content/Safe-UAV-Landing/models/yolo-v3/Unet-Mobilenet.pt'
     seq=glob.glob(IMAGE_DIR)
     segEngine=SegmentationEngine(pathWeights)
     
@@ -48,9 +51,6 @@ if __name__ == '__main__':
         ax2.set_title('Prediction')
         ax2.set_axis_off()
         pred_mask.numpy()
-        fig.savefig('/ext_files/segmentation-trained/testSequence/seq1/figs/'+file_name+'_fig.png')
         xxx=pred_mask.numpy()
         img = Image.fromarray(np.uint8(xxx) , 'L')
-        dir_mask='/ext_files/segmentation-trained/testSequence/seq1/masks/'+file_name+'_mask.jpg'
-        img.save(dir_mask)
-
+        print('success')
