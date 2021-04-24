@@ -1,3 +1,7 @@
+HEADLESS=False
+SAVE_TO_FILE=True
+SIMULATE=True
+
 from cv2 import cv2 as cv
 from enum import Enum     # for enum34, or the stdlib version
 import numpy
@@ -12,12 +16,10 @@ import numpy as np
 from PIL import Image
 from sklearn.preprocessing import normalize
 from pathlib import Path
-from seg_util import SegmentationEngine
-from yolo_util import ObjectDetector
+if not SIMULATE:
+    from seg_util import SegmentationEngine
+    from yolo_util import ObjectDetector
 
-HEADLESS=True
-SAVE_TO_FILE=True
-SIMULATE=True
 class Label(Enum):
     unlabeled=0
     pavedArea=1
@@ -247,32 +249,52 @@ def rank_lzs(lzs_proposals,risk_map):
 
 
 def main():
+    rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
+    rgbImgs=glob.glob("/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
     if not SIMULATE:
-        rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
         objectDetector=ObjectDetector('/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names',
                                     '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
                                     '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
         segEngine = SegmentationEngine('/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
     else:
-        
+        segImgs=glob.glob("/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/masks/*.jpg")
+        segImgs.sort()
+        rgbImgs.sort()
+        seq_obstacles=[
+            [(640,330,100)], 
+            [(643,346,100)], 
+            [(638,365,100)],  
+            [(643,387,100)], 
+            [(645,398,100)],
+            [(642,414,100)],
+            [(640,437,100)],
+            [(638,468,100)],
+            [(643,488,100)],
+            [(640,488,100)]
+        ]
+    
     i=0
     for i in range(len(rgbImgs)):
         fileName=Path(rgbImgs[i]).stem
         img = cv.imread(rgbImgs[i])
-        height, width = img.shape[:2]
-        img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        img_pil = Image.fromarray(img_pil)
-        segImg=segEngine.inferImage(img_pil)
-        segImg = numpy.array(segImg) 
-        _, objs=objectDetector.infer_image(height, width, img)
-        obstacles=[]
-        for obstacle in objs:
-            print(obstacle)
-            posOb=obstacle.get('box')
-            minDist=100
-            w, h = posOb[2], posOb[3]
-            obstacles.append([int(posOb[0]+w/2),int(posOb[1]+h/2),minDist])
-        
+        if not SIMULATE:
+            height, width = img.shape[:2]
+            img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+            img_pil = Image.fromarray(img_pil)
+            segImg=segEngine.inferImage(img_pil)
+            segImg = numpy.array(segImg) 
+            _, objs=objectDetector.infer_image(height, width, img)
+            obstacles=[]
+            for obstacle in objs:
+                print(obstacle)
+                posOb=obstacle.get('box')
+                minDist=100
+                w, h = posOb[2], posOb[3]
+                obstacles.append([int(posOb[0]+w/2),int(posOb[1]+h/2),minDist])
+        else:
+            segImg = cv.imread(segImgs[i])
+            obstacles = seq_obstacles[i]
+
         image=img.copy()
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
         risk_map=get_risk_map(segImg)
