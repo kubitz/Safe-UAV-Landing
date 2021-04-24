@@ -6,6 +6,7 @@ import glob
 import cProfile
 from matplotlib import pyplot as plt
 from scipy.ndimage.filters import gaussian_filter
+from scipy.spatial import distance
 import math
 import numpy as np
 from PIL import Image
@@ -118,15 +119,14 @@ risk_table = dict([
 
 def getDistance(img,pt):
     """Finds Normalised Distance between a given point and center of frame.
-
     Args:
         img (cv2 Frame): image where the point resides
         pt (array): point in the form [x,y]
     """
     dim=img.shape
     furthestDistance=math.hypot(dim[0]/2,dim[1]/2)
-    distance=math.dist(pt,[dim[0]/2,dim[1]/2])
-    return abs(distance/furthestDistance)
+    dist=distance.euclidean(pt,[dim[0]/2,dim[1]/2])
+    return abs(dist/furthestDistance)
 
 def circles_intersect(x1,x2,y1,y2,r1,r2):
     """Checks if two circle intersect

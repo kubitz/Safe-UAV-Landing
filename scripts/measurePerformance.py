@@ -4,7 +4,7 @@ import numpy as np
 lzs=[
     {
         'confidence':0.5,
-        'position': [500,500],
+        'position': [1000,500],
         'radius':100
     }
 ]
@@ -79,8 +79,7 @@ labelsGraz = {
 }
 
 notSafe=['water','fence','fencePole','animal','car','bicycle','tree','baldTree'
-        'obstacle','pool','wall','door','roof','drone','construction','boat']
-
+        'obstacle','pool','wall','door','roof','drone','construction','boat','obstacle']
 
 biLabelsAero=bidict(labelsAero)
 biLabelsGraz=bidict(labelsGraz)
@@ -90,18 +89,18 @@ labels={
     'graz':biLabelsGraz
 }
 
-
-def decodeRiskIds(riskIds,lb):
-    """Checks whether any of the risk ids is considered unsafe
+def decodeRiskIds(crop,lb):
+    """Checks if any class in the lz is considered unsafe
 
     Args:
-        riskIds (list of labels - integers): list of labels detected in the potential lz
+        crop (np 2D array): np array with all values equal to 0 except lz
         lb (bidict): bidirectional dictionary with labels and ids
 
     Returns:
         bool: if the zone is safe, True otherwise False
         list: if the zone is unsafe, list of reasons why, otherwise empty list
     """
+    riskIds=np.unique(crop)
     isSafe=True
     reasons=[]
     for riskId in riskIds:
@@ -112,6 +111,15 @@ def decodeRiskIds(riskIds,lb):
     return isSafe,reasons
 
 def getLzCrop(riskGt,lz):
+    """Crops Gt to have just area of the landing Zone
+
+    Args:
+        riskGt (np array 2d): 2d array containing gt labels
+        lz (dict): lz 
+
+    Returns:
+        np array: 2D np array with all values equal to zero except from lz
+    """
     posLz=lz.get('position')
     radiusLz=lz.get('radius')
     mask = np.zeros_like(riskGt)
@@ -123,18 +131,14 @@ def getLzCrop(riskGt,lz):
 dir_seg= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/images/040003_017.jpg"
 dir_seg= r"/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/segmentation/040003_017.png"
 lb=labels.get("aeroscapes")
-print(lb.inverse[3])
-
 seg_img = cv.imread(dir_seg)
-
 image,_,_ = cv.split(seg_img)
 risk_gt = image.astype('uint8')
 crop=getLzCrop(risk_gt,lzs[0])
+isSafe, reasons = decodeRiskIds(crop,lb)
+
 cv.imshow("best landing zones",cv.applyColorMap(crop, cv.COLORMAP_JET))
 cv.waitKey(0)
 
-riskIds=np.unique(crop)
-print(riskIds)
-isSafe, reasons = decodeRiskIds(riskIds,lb)
 print('is Safe: ', isSafe)
 print('Reasons', reasons )
