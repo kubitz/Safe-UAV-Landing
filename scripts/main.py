@@ -17,6 +17,7 @@ from yolo_util import ObjectDetector
 
 HEADLESS=True
 SAVE_TO_FILE=True
+SIMULATE=True
 class Label(Enum):
     unlabeled=0
     pavedArea=1
@@ -246,12 +247,14 @@ def rank_lzs(lzs_proposals,risk_map):
 
 
 def main():
-    rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
-    objectDetector=ObjectDetector('/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names',
-                                '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
-                                '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
-    segEngine = SegmentationEngine('/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
-
+    if not SIMULATE:
+        rgbImgs=glob.glob("/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg")    
+        objectDetector=ObjectDetector('/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names',
+                                    '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights',
+                                    '/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg')
+        segEngine = SegmentationEngine('/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt')
+    else:
+        
     i=0
     for i in range(len(rgbImgs)):
         fileName=Path(rgbImgs[i]).stem
