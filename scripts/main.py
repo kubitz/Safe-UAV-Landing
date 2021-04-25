@@ -162,8 +162,9 @@ def get_landing_zones_proposals(high_risk_obstacles, stride, r_landing, image):
                 'position':[x,y]
 
             }
-            if meets_min_safety_requirement(lzProposed, high_risk_obstacles):
-                zones_proposed.append(lzProposed)
+            if not meets_min_safety_requirement(lzProposed, high_risk_obstacles):
+                lzProposed["confidence"]=0
+            zones_proposed.append(lzProposed)
     return zones_proposed
 
 def draw_lzs_obs(list_lzs, list_obs,img,thickness=3):
@@ -253,9 +254,8 @@ def rank_lzs(lzsProposals,riskMap,weightDist=3,weightRisk=15):
         crop = cv.bitwise_and(riskMap, mask)
         riskFactor=_risk_map_eval_basic(crop,areaLz)
         distanceFactor=getDistance(riskMap,[lzPos[0],lzPos[1]])
-        lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
-#        lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
- #       lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
+        if lz["confidence"] is math.nan:
+            lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
 
     lzsSorted = sorted(lzsProposals, key=lambda k: k['confidence']) 
     return lzsSorted
