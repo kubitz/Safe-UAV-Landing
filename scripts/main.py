@@ -1,5 +1,5 @@
 HEADLESS=False
-SAVE_TO_FILE=True
+SAVE_TO_FILE=False
 SIMULATE=True
 
 from cv2 import cv2 as cv
@@ -131,9 +131,10 @@ def meets_min_safety_requirement(zone_proposed, obstacles_list):
     Returns:
         (bool): True if it meets safety req., False otherwise.
     """
-
+    posLz=zone_proposed.get("position")
+    radLz=zone_proposed.get("radius")
     for obstacle in obstacles_list:
-        touch=circles_intersect(zone_proposed[0],obstacle[0],zone_proposed[1],obstacle[1],zone_proposed[2],obstacle[2])
+        touch=circles_intersect(posLz[0],obstacle[0],posLz[1],obstacle[1],radLz,obstacle[2])
         if touch<0:
             return False
     return True
@@ -151,11 +152,17 @@ def get_landing_zones_proposals(high_risk_obstacles, stride, r_landing, image):
         list of tuples: list of proposed zones. Each zone is expressed in a tuple (x,y,r_landing)
     """
     zones_proposed=[]
-    for x in range(r_landing,image.shape[0]-r_landing, stride):
-        for y in range(r_landing,image.shape[1]-r_landing, stride):
-            zone_proposed=(y,x,r_landing)
-            if meets_min_safety_requirement(zone_proposed, high_risk_obstacles):
-                zones_proposed.append(zone_proposed)
+
+    for y in range(r_landing,image.shape[0]-r_landing, stride):
+        for x in range(r_landing,image.shape[1]-r_landing, stride):
+            lzProposed = {
+                'confidence':math.nan,
+                'radius':r_landing,
+                'position':[x,y]
+
+            }
+            if meets_min_safety_requirement(lzProposed, high_risk_obstacles):
+                zones_proposed.append(lzProposed)
     return zones_proposed
 
 def draw_lzs_obs(list_lzs, list_obs,img,thickness=3):
@@ -172,7 +179,9 @@ def draw_lzs_obs(list_lzs, list_obs,img,thickness=3):
     for obstacle in list_obs:
         cv.circle(img,(obstacle[0], obstacle[1]), obstacle[2], (0,0,255),thickness=thickness)
     for lz in list_lzs:
-        cv.circle(img,(lz[0], lz[1]), lz[2], (0,255,0),thickness=thickness)
+        posLz=lz.get("position")
+        radLz=lz.get("radius")
+        cv.circle(img,(posLz[0], posLz[1]), radLz, (0,255,0),thickness=thickness)
     return img
 
 def get_risk(image_segment):
@@ -228,23 +237,27 @@ def _risk_map_eval_basic(img,areaLz):
         float: float between 0.0 and 1.0
     """
     maxRisk=areaLz*255
+    print(areaLz)
+    print(np.count_nonzero(img)/3)
     totalRisk=np.sum(img)
     return totalRisk/maxRisk
 
-def rank_lzs(lzs_proposals,risk_map):
-    lzs_processed=[]
-    for lz in lzs_proposals:
-        mask = np.zeros_like(risk_map)
-        mask = cv.circle(mask, (lz[0],lz[1]), lz[2], (255,255,255), -1)
-        areaLz=math.pi* lz[2]*lz[2]
-        crop = cv.bitwise_and(risk_map, mask)
+def rank_lzs(lzsProposals,riskMap,weightDist=0,weightRisk=10):
+    for lz in lzsProposals:
+        lzRad=lz.get("radius")
+        lzPos=lz.get("position")
+        mask = np.zeros_like(riskMap)
+        mask = cv.circle(mask, (lzPos[0],lzPos[1]), lzRad, (255,255,255), -1)
+        areaLz=math.pi* lzRad*lzRad
+        crop = cv.bitwise_and(riskMap, mask)
         riskFactor=_risk_map_eval_basic(crop,areaLz)
-        distanceFactor=getDistance(risk_map,[lz[0],lz[1]])
-        score=(3*riskFactor+distanceFactor)
-        lzs_processed.append((lz, score))
-    lzs_processed.sort(key=lambda tup: tup[1])
-    lzs_sorted, risk_sorted = zip(*lzs_processed)
-    return lzs_sorted
+        distanceFactor=getDistance(riskMap,[lzPos[0],lzPos[1]])
+        lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
+#        lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
+ #       lz["confidence"]=(weightRisk*riskFactor+weightDist*distanceFactor)/(weightRisk+weightDist)
+
+    lzsSorted = sorted(lzsProposals, key=lambda k: k['confidence']) 
+    return lzsSorted
 
 
 
@@ -299,7 +312,7 @@ def main():
         lzs=get_landing_zones_proposals(obstacles,75, 120,image)
         risk_map=get_risk_map(segImg)
         lzs_ranked=rank_lzs(lzs,risk_map)
-        image=draw_lzs_obs(lzs_ranked[:5],obstacles,img)
+        image=draw_lzs_obs(lzs_ranked[-5:],obstacles,img)
 
         if SAVE_TO_FILE:
             cv.imwrite('/content/Safe-UAV-Landing/data/results/riskMaps/'+fileName+'_risk.jpg',cv.applyColorMap(risk_map, cv.COLORMAP_JET))
