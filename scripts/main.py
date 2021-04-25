@@ -9,6 +9,7 @@ import sys
 import glob
 import cProfile
 from matplotlib import pyplot as plt
+from numpy.ma.core import mask_rowcols
 from scipy.ndimage.filters import gaussian_filter
 from scipy.spatial import distance
 import math
@@ -89,7 +90,7 @@ def getDistance(img,pt):
     dim=img.shape
     furthestDistance=math.hypot(dim[0]/2,dim[1]/2)
     dist=distance.euclidean(pt,[dim[0]/2,dim[1]/2])
-    return abs(dist/furthestDistance)
+    return 1-abs(dist/furthestDistance)
 
 def circles_intersect(x1,x2,y1,y2,r1,r2):
     """Checks if two circle intersect
@@ -217,8 +218,10 @@ def get_risk_map_slow(seg_img, windowsize, gaussian_sigma=7):
     return img
 
 def get_risk_map(seg_img, gaussian_sigma=25):
-    #image,_,_ = cv.split(seg_img)
-    image=seg_img
+    if SIMULATE:
+        image,_,_ = cv.split(seg_img)
+    else:
+        image=seg_img
     risk_array = image.astype('float32')
     for label in Label:
         np.where(risk_array==label.value, risk_table[label].value, risk_array)
@@ -237,12 +240,10 @@ def _risk_map_eval_basic(img,areaLz):
         float: float between 0.0 and 1.0
     """
     maxRisk=areaLz*255
-    print(areaLz)
-    print(np.count_nonzero(img)/3)
     totalRisk=np.sum(img)
-    return totalRisk/maxRisk
+    return 1-(totalRisk/maxRisk)
 
-def rank_lzs(lzsProposals,riskMap,weightDist=0,weightRisk=10):
+def rank_lzs(lzsProposals,riskMap,weightDist=3,weightRisk=15):
     for lz in lzsProposals:
         lzRad=lz.get("radius")
         lzPos=lz.get("position")
