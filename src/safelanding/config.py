@@ -1,0 +1,4 @@
+HEADLESS = False
+SAVE_TO_FILE = False
+SIMULATE = True
+EXTRACT_METRICS = True
