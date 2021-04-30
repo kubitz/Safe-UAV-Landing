@@ -7,6 +7,7 @@ from PIL import Image
 
 from safelanding.config import *
 from safelanding.lzfinder import LzFinder
+from safelanding.metrics import LzMetrics
 
 if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
