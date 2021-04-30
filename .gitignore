@@ -127,6 +127,10 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-data/results/*.png
-data/results/*.jpg
-data/results/*.jpeg
+data/results/riskMaps/*.png
+data/results/riskMaps/*.jpg
+data/results/riskMaps/*.jpeg
+
+data/results/landingZones/*.png
+data/results/landingZones/*.jpg
+data/results/landingZones/*.jpeg
