@@ -1,4 +1,4 @@
 HEADLESS = False
-SAVE_TO_FILE = False
+SAVE_TO_FILE = True
 SIMULATE = True
 EXTRACT_METRICS = True
