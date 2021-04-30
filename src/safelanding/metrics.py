@@ -32,9 +32,6 @@ class LzMetrics:
         :rtype: list
         """
         riskIds = np.unique(crop)
-        cv.imshow("image", cv.applyColorMap(crop, cv.COLORMAP_JET))
-        cv.waitKey(0)
-        cv.destroyAllWindows()
         isSafe = True
         reasons = []
         for riskId in riskIds:
@@ -69,6 +66,10 @@ class LzMetrics:
         crop = cls.getLzCrop(risk_gt, lz)
         gt, reasons = cls.decodeRiskIds(crop, lb)
         return gt, reasons
+
+    @classmethod
+    def generateGts(cls):
+        pass
 
 
 if __name__ == "__main__":
