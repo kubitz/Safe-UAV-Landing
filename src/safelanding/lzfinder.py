@@ -30,9 +30,9 @@ class LzFinder:
             raise KeyError("Unsupported dataset name. Check your spelling.")
 
     def get_ranked_lz(
-        self, obstacles, img, segImg, height=None, r_landing=120, stride=75
+        self, obstacles, img, segImg, height=None, r_landing=120, stride=75, id=None
     ):
-        lzs = self._get_landing_zones_proposals(obstacles, stride, r_landing, img)
+        lzs = self._get_landing_zones_proposals(obstacles, stride, r_landing, img,id)
         risk_map = self._get_risk_map(segImg)
         lzs_ranked = self._rank_lzs(lzs, risk_map)
         return lzs_ranked, risk_map
@@ -58,7 +58,7 @@ class LzFinder:
         return True
 
     def _get_landing_zones_proposals(
-        self, high_risk_obstacles, stride, r_landing, image
+        self, high_risk_obstacles, stride, r_landing, image, id
     ):
         """Returns list of lzs proposal based that meet the min safe distance of all the high risk obstacles
 
@@ -81,6 +81,7 @@ class LzFinder:
                     "confidence": math.nan,
                     "radius": r_landing,
                     "position": (x, y),
+                    "id":id
                 }
                 if not self._meets_min_safety_requirement(
                     lzProposed, high_risk_obstacles
