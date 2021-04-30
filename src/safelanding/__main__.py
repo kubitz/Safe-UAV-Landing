@@ -7,25 +7,27 @@ from PIL import Image
 
 from safelanding.config import *
 from safelanding.lzfinder import LzFinder
-from safelanding.seg_util import SegmentationEngine
-from safelanding.yolo_util import ObjectDetector
+
+if not SIMULATE:
+    from safelanding.seg_util import SegmentationEngine
+    from safelanding.yolo_util import ObjectDetector
 
 if __name__ == "__main__":
-    PATH_GT = "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/gts/"
-    PATH_IMG_COLAB = "/content/Safe-UAV-Landing/data/test/seq1/images/*.jpg"
-    PATH_IMG = "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/images/*.jpg"
+    PATH_GT = "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/imgs/seq1/gts"
+    PATH_IMG_COLAB = "/content/Safe-UAV-Landing/data/imgs/seq1/images/*.jpg"
+    PATH_IMG = "/home/kubitz/Documents/fyp/Safe-AV-Landing/data/imgs/seq1/images/*.jpg"
     PATH_SIM_DATA = (
-        "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/masks/*.jpg"
+        "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/imgs/seq1/masks/*.jpg"
     )
     PATH_SIM_DATA_COLAB = (
-        "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/test/seq1/masks/*.jpg"
+        "/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/imgs/seq1/masks/*.jpg"
     )
     PATH_OBJ_DETECT_WEIGHTS = (
-        "/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.weights"
+        "/content/Safe-UAV-Landing/data/weights/yolo-v3/yolov3_leaky.weights"
     )
-    PATH_OBJ_CFG = "/content/Safe-UAV-Landing/models/yolo-v3/yolov3_leaky.cfg"
-    PATH_OBJ_NAMES = "/content/Safe-UAV-Landing/models/yolo-v3/visdrone.names"
-    PATH_SEG_WEIGHTS = "/content/Safe-UAV-Landing/models/seg/Unet-Mobilenet.pt"
+    PATH_OBJ_CFG = "/content/Safe-UAV-Landing/data/weights/yolo-v3/yolov3_leaky.cfg"
+    PATH_OBJ_NAMES = "/content/Safe-UAV-Landing/data/weights/yolo-v3/visdrone.names"
+    PATH_SEG_WEIGHTS = "/content/Safe-UAV-Landing/data/weights/seg/Unet-Mobilenet.pt"
     rgbImgs = glob.glob(PATH_IMG_COLAB)
     rgbImgs = glob.glob(PATH_IMG)
     if not SIMULATE:
@@ -80,7 +82,7 @@ if __name__ == "__main__":
         if EXTRACT_METRICS:
             gtSeg = glob.glob(PATH_GT + "*.png")
             if SIMULATE:
-                print("hello")
+                print("Metrics to be implemented")
 
         if SAVE_TO_FILE:
             cv.imwrite(
