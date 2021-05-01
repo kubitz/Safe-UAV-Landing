@@ -17,21 +17,19 @@ lzs = [
 class LzMetrics:
     def __init__(self):
         pass
-    
-    @classmethod
-    def draw_gt_lzs(cls,img,lzs_gt,thickness=2):
-        for lz in lzs_gt:
-            gt=lz["gt"]
-            radLz=lz["radius"]
-            posLz=lz["position"]
-            if gt==True:
-                color=(0, 255, 0)
-            else:
-                color=(0,0,255)
 
-            cv.circle(
-                img, (posLz[0], posLz[1]), radLz, color, thickness=thickness
-            )
+    @classmethod
+    def draw_gt_lzs(cls, img, lzs_gt, thickness=2):
+        for lz in lzs_gt:
+            gt = lz["gt"]
+            radLz = lz["radius"]
+            posLz = lz["position"]
+            if gt == 1:
+                color = (0, 255, 0)
+            else:
+                color = (0, 0, 255)
+
+            cv.circle(img, (posLz[0], posLz[1]), radLz, color, thickness=thickness)
         return img
 
     @classmethod
@@ -48,12 +46,12 @@ class LzMetrics:
         :rtype: list
         """
         riskIds = np.unique(crop)
-        isSafe = True
+        isSafe = 1
         reasons = []
         for riskId in riskIds:
             risk = lb.inverse[riskId][0]
             if risk in notSafe:
-                isSafe = False
+                isSafe = 0
                 reasons.append(risk)
         return isSafe, reasons
 
