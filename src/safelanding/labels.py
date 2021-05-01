@@ -90,9 +90,11 @@ risk_table = {
 
 # Safety indicator for the metrics module. This is the Ground truth.
 notSafe = [
+    "person",
     "water",
     "fence",
     "fencePole",
+    "bike",
     "animal",
     "car",
     "bicycle",

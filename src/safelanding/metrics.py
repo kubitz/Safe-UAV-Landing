@@ -17,6 +17,22 @@ lzs = [
 class LzMetrics:
     def __init__(self):
         pass
+    
+    @classmethod
+    def draw_gt_lzs(cls,img,lzs_gt,thickness=2):
+        for lz in lzs_gt:
+            gt=lz["gt"]
+            radLz=lz["radius"]
+            posLz=lz["position"]
+            if gt==True:
+                color=(0, 255, 0)
+            else:
+                color=(0,0,255)
+
+            cv.circle(
+                img, (posLz[0], posLz[1]), radLz, color, thickness=thickness
+            )
+        return img
 
     @classmethod
     def decodeRiskIds(cls, crop, lb):
