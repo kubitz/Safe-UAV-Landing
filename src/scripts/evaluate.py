@@ -44,7 +44,7 @@ for seq in resultList:
     lzsGts=[]
     
     if not (len(gtsSeg)==nbInferredImgs==len(rgbImgs)):
-        raise IndexError("Non-matching number of gts/lzs")
+        raise IndexError("Non-matching number of ground truths/landing zones")
 
     for idx, gt in enumerate(gtsSeg):
         lzs=df_lzs[df_lzs["id"]==Path(gt).stem].to_dict("records")
