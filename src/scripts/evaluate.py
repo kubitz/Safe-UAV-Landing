@@ -12,7 +12,7 @@ from safelanding.labels import *
 from safelanding.metrics import LzMetrics
 from safelanding.config import *
 
-HEADLESS=False
+HEADLESS=True
 
 basePath = Path(__file__).parents[2]
 dataPath = basePath.joinpath("data", "imgs")
@@ -51,7 +51,7 @@ for seq in resultList:
         gtImg = cv.imread(gt)
         for lz in lzs:
             lz["gt"], lz["reasons"] = LzMetrics.getLzGt(gtImg, lz, labels)
-        lzsGts.append(lzs)
+        lzsGts+=lzs
     
         if not HEADLESS:
             imgPath=rgbImgs[idx]
@@ -60,3 +60,8 @@ for seq in resultList:
             cv.imshow("gt",img)
             cv.waitKey(0)
             cv.destroyAllWindows()
+    
+    dfLzsGt = pd.DataFrame(lzsGts)
+    dfLzsGt.to_csv(
+        resultPath.joinpath(seq.stem,"gt_lzs.csv"), index=False
+    )
