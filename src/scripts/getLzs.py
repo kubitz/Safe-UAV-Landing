@@ -1,8 +1,9 @@
 import glob
 from pathlib import Path
 from typing import Sequence
-import pandas as pd
+
 import numpy as np
+import pandas as pd
 from cv2 import cv2 as cv
 from PIL import Image
 
@@ -14,7 +15,7 @@ if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
     from safelanding.yolo_util import ObjectDetector
 
-HEADLESS=True
+HEADLESS = True
 
 if __name__ == "__main__":
 
@@ -33,7 +34,7 @@ if __name__ == "__main__":
     segSimPath = str(basePath.joinpath("data", "imgs", "0_simulation", "masks", "*"))
     gtsPath = str(basePath.joinpath("data", "imgs", "0_simulation", "gts", "*"))
     imgsPath = str(basePath.joinpath("data", "imgs", "0_simulation", "images", "*"))
-    resultPath = basePath.joinpath("data","results")
+    resultPath = basePath.joinpath("data", "results")
     seq_name = Path(imgsPath).parts[-3]
     rgbImgs = glob.glob(imgsPath)
     if not SIMULATE:
@@ -56,7 +57,7 @@ if __name__ == "__main__":
             [(640, 488, 100)],
         ]
 
-    resultLzs=[]
+    resultLzs = []
 
     for i in range(len(rgbImgs)):
         fileName = Path(rgbImgs[i]).stem
@@ -82,23 +83,33 @@ if __name__ == "__main__":
             obstacles = seq_obstacles[i]
 
         lzFinder = LzFinder("aeroscapes")
-        lzs_ranked, risk_map = lzFinder.get_ranked_lz(obstacles, img, segImg,id=fileName)
+        lzs_ranked, risk_map = lzFinder.get_ranked_lz(
+            obstacles, img, segImg, id=fileName
+        )
         img = lzFinder.draw_lzs_obs(lzs_ranked[-5:], obstacles, img)
-        resultLzs+=lzs_ranked
+        resultLzs += lzs_ranked
         if EXTRACT_METRICS:
             gtSeg = glob.glob(gtsPath + "*.png")
             gtSeg.sort()
             if SIMULATE:
                 print("implement metrics")
         if SAVE_TO_FILE:
-            Path.mkdir(resultPath.joinpath(seq_name,"riskMaps"),parents=True,exist_ok=True)
-            Path.mkdir(resultPath.joinpath(seq_name,"landingZones"),parents=True,exist_ok=True)
+            Path.mkdir(
+                resultPath.joinpath(seq_name, "riskMaps"), parents=True, exist_ok=True
+            )
+            Path.mkdir(
+                resultPath.joinpath(seq_name, "landingZones"),
+                parents=True,
+                exist_ok=True,
+            )
             cv.imwrite(
-                str(resultPath.joinpath(seq_name,"riskMaps", fileName + "_risk.jpg")),
+                str(resultPath.joinpath(seq_name, "riskMaps", fileName + "_risk.jpg")),
                 cv.applyColorMap(risk_map, cv.COLORMAP_JET),
             )
             cv.imwrite(
-                str(resultPath.joinpath(seq_name,"landingZones", fileName + "_lzs.jpg")),
+                str(
+                    resultPath.joinpath(seq_name, "landingZones", fileName + "_lzs.jpg")
+                ),
                 img,
             )
 
@@ -109,9 +120,6 @@ if __name__ == "__main__":
             cv.waitKey(0)
             cv.destroyAllWindows()
 
-
     dfLzs = pd.DataFrame(resultLzs)
-    dfLzs.to_csv(
-        resultPath.joinpath(seq_name,"results_lzs.csv"), index=False
-    )
+    dfLzs.to_csv(resultPath.joinpath(seq_name, "results_lzs.csv"), index=False)
     print(dfLzs.head())

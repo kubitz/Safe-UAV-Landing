@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
-from safelanding.metricsPlotter import BinaryClassification, Optimum
+from safelanding.metricsPlotter import BinaryClassification, Metrics, MetricsLz, Optimum
 
 basePath = Path(__file__).parents[2]
 dataPath = basePath.joinpath("data", "imgs")
@@ -22,16 +22,18 @@ for seq in resultList:
     basePath = Path(__file__).parents[2]
     df_lzs = pd.read_csv(
         pathGt,
-        converters={"position": ast.literal_eval},
+        converters={"position": ast.literal_eval, "reasons": ast.literal_eval},
     )
 
+
+    opt = MetricsLz(df_lzs, threshold=0.6)
+
+    print("reasons: ", opt.reasonsFP)
+    print("Bad Lzs:", opt.fpLz)
+    # Visualisation with plot_metric
     y_pred = df_lzs["confidence"].tolist()
     y_gt = df_lzs["gt"].tolist()
-    opt = Optimum(np.array(y_gt), np.array(y_pred))
-    report = opt.report()
-    print(report)
-    # Visualisation with plot_metric
-    bc = BinaryClassification(y_gt, y_pred, labels=["Unsafe", "Safe"], threshold=0.61)
+    bc = BinaryClassification(y_gt, y_pred, labels=["Unsafe", "Safe"], threshold=0.08)
     bc.print_report()
 
     # Figures
@@ -41,7 +43,7 @@ for seq in resultList:
     plt.subplot2grid((2, 6), (0, 2), colspan=2)
     bc.plot_precision_recall_curve()
     plt.subplot2grid((2, 6), (0, 4), colspan=2)
-    bc.plot_class_distribution()
+    bc.plot_threshold()
     plt.subplot2grid((2, 6), (1, 1), colspan=2)
     bc.plot_confusion_matrix()
     plt.subplot2grid((2, 6), (1, 3), colspan=2)
