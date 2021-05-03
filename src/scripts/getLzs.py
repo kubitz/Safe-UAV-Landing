@@ -24,7 +24,7 @@ if __name__ == "__main__":
     weigthObjPath = str(
         basePath.joinpath("data", "weights", "yolo-v3", "yolov3_leaky.weights")
     )
-    cfgObjPath = str(basePath.joinpath("data", "weights", "yolov3_leaky.cfg"))
+    cfgObjPath = str(basePath.joinpath("data", "weights", "yolo-v3", "yolov3_leaky.cfg"))
     namesObjPath = str(
         basePath.joinpath("data", "weights", "yolo-v3", "visdrone.names")
     )
