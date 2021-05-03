@@ -14,7 +14,7 @@ lzs = [
 ]
 
 
-class LzMetrics:
+class LzGtGenerator:
     def __init__(self):
         pass
 
@@ -105,10 +105,10 @@ if __name__ == "__main__":
         rgb = cv.imread(imgs[i])
         fileName = Path(gtsSeg[i]).stem
         lzs[i]["filename"] = fileName
-        cv.imshow("image", LzMetrics.getLzCrop(rgb, lzs[i]))
+        cv.imshow("image", LzGtGenerator.getLzCrop(rgb, lzs[i]))
         cv.waitKey(0)
         cv.destroyAllWindows()
-        lzs[0]["gt"], lzs[0]["reasons"] = LzMetrics.getLzGt(seg_img, lzs[i], lb)
+        lzs[0]["gt"], lzs[0]["reasons"] = LzGtGenerator.getLzGt(seg_img, lzs[i], lb)
 
     df = pd.DataFrame(lzs)
     df.to_csv(
