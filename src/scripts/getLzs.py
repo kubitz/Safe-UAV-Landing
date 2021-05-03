@@ -9,7 +9,7 @@ from PIL import Image
 
 from safelanding.config import *
 from safelanding.lzfinder import LzFinder
-from safelanding.metrics import LzMetrics
+from safelanding.metrics import LzGtGenerator
 
 if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
@@ -62,6 +62,7 @@ if __name__ == "__main__":
     for i in range(len(rgbImgs)):
         fileName = Path(rgbImgs[i]).stem
         img = cv.imread(rgbImgs[i])
+        objs=[]
         if not SIMULATE:
             height, width = img.shape[:2]
             img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -92,13 +93,18 @@ if __name__ == "__main__":
             gtSeg = glob.glob(gtsPath + "*.png")
             gtSeg.sort()
             if SIMULATE:
-                print("implement metrics")
+                pass
         if SAVE_TO_FILE:
             Path.mkdir(
                 resultPath.joinpath(seq_name, "riskMaps"), parents=True, exist_ok=True
             )
             Path.mkdir(
                 resultPath.joinpath(seq_name, "landingZones"),
+                parents=True,
+                exist_ok=True,
+            )
+            Path.mkdir(
+                resultPath.joinpath(seq_name, "masks"),
                 parents=True,
                 exist_ok=True,
             )
@@ -112,6 +118,14 @@ if __name__ == "__main__":
                 ),
                 img,
             )
+            cv.imwrite(
+                str(
+                    resultPath.joinpath(seq_name, "masks", fileName + "_mask.jpg")
+                ),
+                segImg,
+            )
+            df_objDetect = pd.DataFrame(objs)
+            df_objDetect.to_csv(resultPath.joinpath(seq_name, "obj_detected.csv"), index=False)
 
         if not HEADLESS:
             cv.imshow("best landing zones", cv.applyColorMap(risk_map, cv.COLORMAP_JET))
@@ -122,4 +136,3 @@ if __name__ == "__main__":
 
     dfLzs = pd.DataFrame(resultLzs)
     dfLzs.to_csv(resultPath.joinpath(seq_name, "results_lzs.csv"), index=False)
-    print(dfLzs.head())

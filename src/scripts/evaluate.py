@@ -1,19 +1,12 @@
 import ast
-import configparser
-import glob
-import math
-import os
 from pathlib import Path
 
-import cv2 as cv
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from pandas import DataFrame
 
-from safelanding.config import *
-from safelanding.labels import *
-from safelanding.metrics import LzGtGenerator
-
-HEADLESS = True
+from safelanding.metricsPlotter import BinaryClassification, Metrics, MetricsLz, Optimum
 
 basePath = Path(__file__).parents[2]
 dataPath = basePath.joinpath("data", "imgs")
@@ -25,44 +18,40 @@ for dir in resultPath.iterdir():
         resultList.append(dir)
 
 for seq in resultList:
-    pathImgsGt = str(dataPath.joinpath(seq.stem, "gts", "*"))
-    pathImgs = str(dataPath.joinpath(seq.stem, "images", "*"))
-
-    config = configparser.ConfigParser()
-    config.read(str(dataPath.joinpath(seq.stem, "config.ini")))
-    dataset = config["SETTINGS"]["dataset"]
-    labels = datasetLabels[dataset]
-    r_landing = config["SETTINGS"]["r_landing"]
-
-    gtsSeg = glob.glob(pathImgsGt)
-    rgbImgs = glob.glob(pathImgs)
-    gtsSeg.sort()
-    rgbImgs.sort()
+    pathGt = str(resultPath.joinpath(seq.stem, "gt_lzs.csv"))
+    basePath = Path(__file__).parents[2]
     df_lzs = pd.read_csv(
-        str(resultPath.joinpath(seq.stem, "results_lzs.csv")),
-        converters={"position": ast.literal_eval},
+        pathGt,
+        converters={"position": ast.literal_eval, "reasons": ast.literal_eval},
     )
-    nbInferredImgs = df_lzs["id"].nunique()
 
-    lzsGts = []
+    opt = MetricsLz(df_lzs, threshold=0.6)
 
-    if not (len(gtsSeg) == nbInferredImgs == len(rgbImgs)):
-        raise IndexError("Non-matching number of ground truths/landing zones")
+    print("reasons: ", opt.reasonsFP)
+    print("Bad Lzs:", opt.fpLz)
+    # Visualisation with plot_metric
+    y_pred = df_lzs["confidence"].tolist()
+    y_gt = df_lzs["gt"].tolist()
+    bc = BinaryClassification(y_gt, y_pred, labels=["Unsafe", "Safe"], threshold=0.08)
+    bc.print_report()
 
-    for idx, gt in enumerate(gtsSeg):
-        lzs = df_lzs[df_lzs["id"] == Path(gt).stem].to_dict("records")
-        gtImg = cv.imread(gt)
-        for lz in lzs:
-            lz["gt"], lz["reasons"] = LzGtGenerator.getLzGt(gtImg, lz, labels)
-        lzsGts += lzs
+    # Figures
+    plt.figure(figsize=(15, 10))
+    plt.subplot2grid(shape=(2, 6), loc=(0, 0), colspan=2)
+    bc.plot_roc_curve()
+    plt.subplot2grid((2, 6), (0, 2), colspan=2)
+    bc.plot_precision_recall_curve()
+    plt.subplot2grid((2, 6), (0, 4), colspan=2)
+    bc.plot_threshold()
+    plt.subplot2grid((2, 6), (1, 1), colspan=2)
+    bc.plot_confusion_matrix()
+    plt.subplot2grid((2, 6), (1, 3), colspan=2)
+    bc.plot_confusion_matrix(normalize=True)
 
-        if not HEADLESS:
-            imgPath = rgbImgs[idx]
-            img = cv.imread(imgPath)
-            img = LzGtGenerator.draw_gt_lzs(img, lzs)
-            cv.imshow("gt", img)
-            cv.waitKey(0)
-            cv.destroyAllWindows()
+    # Save figure
 
-    dfLzsGt = pd.DataFrame(lzsGts)
-    dfLzsGt.to_csv(resultPath.joinpath(seq.stem, "gt_lzs.csv"), index=False)
+    # Display Figure
+    plt.show()
+    plt.close()
+
+    # Full report of the classification

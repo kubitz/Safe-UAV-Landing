@@ -154,7 +154,32 @@ class Metrics:
         except:
             return None
 
+class MetricsLz(Metrics):
+    def __init__(self, df_lzs, threshold=0.5) -> None:
+        self.y_pred = df_lzs["confidence"].tolist()
+        self.y_gt = df_lzs["gt"].tolist()
+        self.reasons = df_lzs["reasons"].tolist()
+        self.reasonsFP = dict()
+        self.lzs = df_lzs.to_dict("records")
 
+        self.fpLz = []
+        super().__init__(
+            np.array(self.y_gt), np.array(self.y_pred), threshold=threshold
+        )
+
+    def _predict(self):
+        for lz in self.lzs:
+            if lz["gt"] == 0 and lz["confidence"] <= self.threshold:
+                self.TN += 1
+            elif lz["gt"] == 1 and lz["confidence"] >= self.threshold:
+                self.TP += 1
+            elif lz["gt"] == 1 and lz["confidence"] <= self.threshold:
+                self.FN += 1
+            elif lz["gt"] == 0 and lz["confidence"] >= self.threshold:
+                self.FP += 1
+                for reason in lz["reasons"]:
+                    self.reasonsFP[reason] = self.reasonsFP.get(reason, 0) + 1
+                    self.fpLz.append(lz)
 class Optimum:
     def __init__(self, test, prediction):
         self.test = test
@@ -351,32 +376,6 @@ class Optimum:
         return df
 
 
-class MetricsLz(Metrics):
-    def __init__(self, df_lzs, threshold=0.5) -> None:
-        self.y_pred = df_lzs["confidence"].tolist()
-        self.y_gt = df_lzs["gt"].tolist()
-        self.reasons = df_lzs["reasons"].tolist()
-        self.reasonsFP = dict()
-        self.lzs = df_lzs.to_dict("records")
-
-        self.fpLz = []
-        super().__init__(
-            np.array(self.y_gt), np.array(self.y_pred), threshold=threshold
-        )
-
-    def _predict(self):
-        for lz in self.lzs:
-            if lz["gt"] == 0 and lz["confidence"] <= self.threshold:
-                self.TN += 1
-            elif lz["gt"] == 1 and lz["confidence"] >= self.threshold:
-                self.TP += 1
-            elif lz["gt"] == 1 and lz["confidence"] <= self.threshold:
-                self.FN += 1
-            elif lz["gt"] == 0 and lz["confidence"] >= self.threshold:
-                self.FP += 1
-                for reason in lz["reasons"]:
-                    self.reasonsFP[reason] = self.reasonsFP.get(reason, 0) + 1
-                    self.fpLz.append(lz)
 
 class BinaryClassification:
     """
