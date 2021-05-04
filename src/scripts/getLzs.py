@@ -83,7 +83,7 @@ if __name__ == "__main__":
             segImg = cv.imread(segImgs[i])
             obstacles = seq_obstacles[i]
 
-        lzFinder = LzFinder("aeroscapes")
+        lzFinder = LzFinder("graz")
         lzs_ranked, risk_map = lzFinder.get_ranked_lz(
             obstacles, img, segImg, id=fileName
         )
