@@ -23,7 +23,8 @@ resultList = []
 for dir in resultPath.iterdir():
     if dir.is_dir():
         resultList.append(dir)
-
+resultList.sort()
+resultList.pop(0)
 for seq in resultList:
     pathImgsGt = str(dataPath.joinpath(seq.stem, "gts", "*"))
     pathImgs = str(dataPath.joinpath(seq.stem, "images", "*"))
