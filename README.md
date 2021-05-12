@@ -8,10 +8,12 @@ Automatic Safe Landing Zone Estimation for UAVs (Quadcopters) in unkown environm
 This project can be run in two configurations
 
 1. Simulation Mode
+
 *In this mode all the images have been pre-inferred. This is most appropriate if you want to do some debugging/test the code quickly without having to worry about ML dependencies*
 
 
 2. Machine Learning Inference Mode
+
 *In this mode you can use the system on any given images*
 
 -> colab notebook to come
