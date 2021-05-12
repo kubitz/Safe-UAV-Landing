@@ -1,6 +1,6 @@
 # Safe-UAV-Landing (in development)
 
-This project is currently in development, a stable release is expected by the end of June 2021. 
+**This project is currently in development, a stable release is expected by the end of July 2021**. 
 
 Automatic Safe Landing Zone Estimation for UAVs (Quadcopters) in unkown environments written in Python. 
 
