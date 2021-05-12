@@ -1,5 +1,20 @@
-# Safe-UAV-Landing (Python)
+# Safe-UAV-Landing (in development)
+
+This project is currently in development, a stable release is expected by the end of June 2021. 
+
 Automatic Safe Landing Zone Estimation for UAVs (Quadcopters) in unkown environments written in Python. 
+
+# How To Run
+This project can be run in two configurations
+
+1. Simulation Mode
+*In this mode all the images have been pre-inferred. This is most appropriate if you want to do some debugging/test the code quickly without having to worry about ML dependencies*
+
+
+2. Machine Learning Inference Mode
+*In this mode you can use the system on any given images*
+
+-> colab notebook to come
 
 # Risk Map Generation - Safe Drone Landing
 
@@ -64,3 +79,23 @@ A weighted average is then done based on those two factors leading to a final sc
 
 ## Alternative methods
 Based on the previous meeting, it seems that another approach that could make the verification easier, would be to not discard any landing zone in step 1., but rather score them extremely low to make sure they get pushed back to the bottom of the ranking (maybe by assigning negative scores, and use a max(score, 0) at the end). 
+
+# Evaluation of Quality of Lz
+This project includes a benchmark to evaluate any autonomous landing zone system. The ground truths is configured in `config.py`. More details on the evaluation framework are expected in the coming month. 
+
+## How to Run Evaluation 
+-> insert instuction here
+
+# Credits 
+This project uses the following datasets:
+* TU-Graz Landing - insert link
+* Aeroscapes - insert link
+
+Some of the code was modified from the following repos:
+* Metrics Drawing - insert link
+* Bi-directional dictionary - insert link
+
+# Related Work
+I have written other code around this autonomous landing:
+* AutonomousDroneLanding (link to come): c++ implementation of this to run on a Jetson NX in real-time
+* UAV-Segmentation-Scripts[https://github.com/kubitz/UAV-Segmentation-Scripts]: scripts to help relabel datasets relevant to autonomous drone landing. 
