@@ -31,7 +31,6 @@ for seq in resultList:
     df_lzs = pd.concat([df_lzs, df_lz], ignore_index=True)
 
 
-
 opt = MetricsLz(df_lzs, threshold=0.75)
 
 print("reasons: ", opt.reasonsFP)
