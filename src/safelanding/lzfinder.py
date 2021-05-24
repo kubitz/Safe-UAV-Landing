@@ -32,10 +32,23 @@ class LzFinder:
     def get_ranked_lz(
         self, obstacles, img, segImg, height=None, r_landing=120, stride=75, id=None
     ):
+        # TODO: use height of drone to tune size of possible landing zones
         lzs = self._get_landing_zones_proposals(obstacles, stride, r_landing, img, id)
-        risk_map = self._get_risk_map(segImg)
-        lzs_ranked = self._rank_lzs(lzs, risk_map)
+        if use_seg:
+            risk_map = self._get_risk_map(segImg)
+            lzs_ranked = self._rank_lzs(lzs, risk_map,obstacles)
+        else:
+            risk_map = np.zeros(segImg.shape, np.uint8)
+            lzs_ranked = self._rank_lzs(lzs, risk_map, obstacles, weightRisk=0)
         return lzs_ranked, risk_map
+
+    def _dist_to_obs(self, lz, obstacles, img):
+        posLz = lz.get("position")
+        norm_dists = []
+        for ob in obstacles:
+            dist = self.getDistance(img, (ob[0], ob[1]), posLz)
+            norm_dists.append(1-dist)
+        return np.mean(norm_dists)
 
     def _meets_min_safety_requirement(cls, zone_proposed, obstacles_list):
         """Checks if a proposed safety zone is breaking the min. safe distance of all the high-risk obstacles detected in an image
@@ -165,17 +178,23 @@ class LzFinder:
             mask = cv.circle(mask, (lzPos[0], lzPos[1]), lzRad, (255, 255, 255), -1)
             areaLz = math.pi * lzRad * lzRad
             crop = cv.bitwise_and(riskMap, mask)
-            riskFactor = self._risk_map_eval_basic(crop, areaLz)
-            distanceFactor = self.getDistance(riskMap, [lzPos[0], lzPos[1]])
+
+            if weightRisk != 0:
+                riskFactor = self._risk_map_eval_basic(crop, areaLz)
+            if weightDist != 0:
+                distanceFactor = self.getDistanceCenter(riskMap, (lzPos[0], lzPos[1]))
+            if weightOb != 0:
+                obFactor = self._dist_to_obs(lz, obstacles, riskMap)
+
             if lz["confidence"] is math.nan:
                 lz["confidence"] = (
-                    weightRisk * riskFactor + weightDist * distanceFactor
-                ) / (weightRisk + weightDist)
+                                           weightRisk * riskFactor + weightDist * distanceFactor + weightOb * obFactor
+                                   ) / (weightRisk + weightDist + weightOb)
 
         lzsSorted = sorted(lzsProposals, key=lambda k: k["confidence"])
         return lzsSorted
 
-    def getDistance(self, img, pt):
+    def getDistanceCenter(self, img, pt):
         """Finds Normalised Distance between a given point and center of a frame
 
         :param img: image where the point resides
@@ -188,6 +207,21 @@ class LzFinder:
         dim = img.shape
         furthestDistance = math.hypot(dim[0] / 2, dim[1] / 2)
         dist = distance.euclidean(pt, [dim[0] / 2, dim[1] / 2])
+        return 1 - abs(dist / furthestDistance)
+
+    def getDistance(self, img, pt1, pt2):
+        """Finds Normalised Distance between a two points
+
+        :param img: image where the point resides
+        :type img: Mat
+        :param pt: coordinates of point in the form (x,y)
+        :type pt: tuple
+        :return: distance
+        :rtype: float
+        """
+        dim = img.shape
+        furthestDistance = math.hypot(dim[0], dim[1])
+        dist = distance.euclidean(pt1, pt2)
         return 1 - abs(dist / furthestDistance)
 
     @classmethod
