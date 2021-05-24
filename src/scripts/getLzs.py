@@ -94,7 +94,8 @@ if __name__ == "__main__":
                 img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
                 img_pil = Image.fromarray(img_pil)
                 start_seg = time.time()
-                segImg = segEngine.inferImage(img_pil)
+                #segImg = segEngine.inferImage(img_pil)
+                segImg = np.zeros((1152, 768,1), np.uint8)
                 end_seg = time.time()
                 segImg = np.array(segImg)
                 start_obj = time.time()
@@ -117,7 +118,7 @@ if __name__ == "__main__":
             start_logic = time.time()
             lzFinder = LzFinder("graz", simulate=SIMULATE)
             lzs_ranked, risk_map = lzFinder.get_ranked_lz(
-                obstacles, img, segImg, id=fileName
+                obstacles, img, segImg, id=fileName, use_seg=False
             )
             end_logic = time.time()
             img = lzFinder.draw_lzs_obs(lzs_ranked[-5:], obstacles, img)
