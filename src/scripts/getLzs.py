@@ -2,6 +2,7 @@ import glob
 from pathlib import Path
 from typing import Sequence
 import os
+import time
 import numpy as np
 import pandas as pd
 from cv2 import cv2 as cv
@@ -80,17 +81,26 @@ if __name__ == "__main__":
         segImgs = glob.glob(segSimPath)
         resultLzs = []
         detected_objs = []
-
+        # Vectors to store execution times
+        exec_pipeline = []
+        exec_obj = []
+        exec_seg = []
+        exec_logic = []
         for i in range(len(rgbImgs)):
+            start_pipeline = time.time()
             fileName = Path(rgbImgs[i]).stem
             img = cv.imread(rgbImgs[i])
             if not SIMULATE:
                 height, width = img.shape[:2]
                 img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
                 img_pil = Image.fromarray(img_pil)
+                start_seg = time.time()
                 segImg = segEngine.inferImage(img_pil)
+                end_seg = time.time()
                 segImg = np.array(segImg)
+                start_obj = time.time()
                 _, objs = objectDetector.infer_image(height, width, img)
+                end_obj = time.time()
                 obstacles = []
                 for obstacle in objs:
                     print(obstacle)
@@ -105,13 +115,21 @@ if __name__ == "__main__":
             else:
                 segImg = cv.imread(segImgs[i])
                 obstacles = seq_obstacles[0]
-
+            start_logic = time.time()
             lzFinder = LzFinder("graz", simulate=SIMULATE)
             lzs_ranked, risk_map = lzFinder.get_ranked_lz(
                 obstacles, img, segImg, id=fileName
             )
+            end_logic = time.time()
             img = lzFinder.draw_lzs_obs(lzs_ranked[-5:], obstacles, img)
             resultLzs += lzs_ranked
+            end_pipeline = time.time()
+
+            exec_pipeline.append(end_pipeline-start_pipeline)
+            exec_logic.append(end_logic-start_logic)
+            if not SIMULATE:
+                exec_obj.append(end_obj-start_obj)
+                exec_seg.append(end_seg-start_seg)
             if EXTRACT_METRICS:
                 gtSeg = glob.glob(gtsPath + "*.png")
                 gtSeg.sort()
@@ -171,3 +189,8 @@ if __name__ == "__main__":
 
         dfLzs = pd.DataFrame(resultLzs)
         dfLzs.to_csv(resultPath.joinpath(seq_name, "results_lzs.csv"), index=False)
+        print("time pipeline: ", np.mean(exec_pipeline), " --- FPS:", 1/np.mean(exec_pipeline))
+        print("time logic: ", np.mean(exec_logic), " --- FPS:", 1/np.mean(exec_logic))
+        if not SIMULATE:
+            print("time seg: ", np.mean(exec_seg), " --- FPS:", 1/np.mean(exec_seg))
+            print("time obj: ", np.mean(exec_obj), " --- FPS:", 1/np.mean(exec_obj))
