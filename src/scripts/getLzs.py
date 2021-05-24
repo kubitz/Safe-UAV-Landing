@@ -16,7 +16,7 @@ if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
     from safelanding.yolo_util import ObjectDetector
 
-HEADLESS = True
+HEADLESS = False
 
 if __name__ == "__main__":
     basePath = Path.cwd().parents[1]
@@ -51,7 +51,6 @@ if __name__ == "__main__":
 
     else:
         dataFolders.pop(0)
-    print(dataFolders)
     if not SIMULATE:
         objectDetector = ObjectDetector(namesObjPath, weigthObjPath, cfgObjPath)
         segEngine = SegmentationEngine(weigthSegPath)

@@ -30,7 +30,7 @@ class LzFinder:
             raise KeyError("Unsupported dataset name. Check your spelling.")
 
     def get_ranked_lz(
-        self, obstacles, img, segImg, height=None, r_landing=120, stride=75, id=None
+            self, obstacles, img, segImg, height=None, r_landing=120, stride=75, id=None, use_seg=True
     ):
         # TODO: use height of drone to tune size of possible landing zones
         lzs = self._get_landing_zones_proposals(obstacles, stride, r_landing, img, id)
@@ -71,7 +71,7 @@ class LzFinder:
         return True
 
     def _get_landing_zones_proposals(
-        self, high_risk_obstacles, stride, r_landing, image, id
+            self, high_risk_obstacles, stride, r_landing, image, id
     ):
         """Returns list of lzs proposal based that meet the min safe distance of all the high risk obstacles
 
@@ -97,7 +97,7 @@ class LzFinder:
                     "id": id,
                 }
                 if not self._meets_min_safety_requirement(
-                    lzProposed, high_risk_obstacles
+                        lzProposed, high_risk_obstacles
                 ):
                     lzProposed["confidence"] = 0
                 zones_proposed.append(lzProposed)
@@ -128,7 +128,7 @@ class LzFinder:
         risk_array = np.zeros(shape=(risk_r, risk_c))
         for r in range(0, seg_img.shape[0] - windowsize, windowsize):
             for c in range(0, seg_img.shape[1] - windowsize, windowsize):
-                window = seg_img[r : r + windowsize, c : c + windowsize]
+                window = seg_img[r: r + windowsize, c: c + windowsize]
                 risk_array[int(r / windowsize)][int(c / windowsize)] = self._get_risk(
                     window
                 )
@@ -170,8 +170,9 @@ class LzFinder:
         totalRisk = np.sum(img)
         return 1 - (totalRisk / maxRisk)
 
-    def _rank_lzs(self, lzsProposals, riskMap, weightDist=3, weightRisk=15):
+    def _rank_lzs(self, lzsProposals, riskMap, obstacles, weightDist=5, weightRisk=15, weightOb=5):
         for lz in lzsProposals:
+            riskFactor, distanceFactor, obFactor = 0, 0, 0
             lzRad = lz.get("radius")
             lzPos = lz.get("position")
             mask = np.zeros_like(riskMap)
@@ -277,7 +278,7 @@ class LzFinder:
 
         d = math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
         if d < r1 - r2:
-            #'print("C2  is in C1")
+            # 'print("C2  is in C1")
             return -3
         elif d < r2 - r1:
             return -2
