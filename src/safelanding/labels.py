@@ -20,7 +20,7 @@ labelsAero = {
 labelsGraz = {
     "unlabeled": 0,
     "pavedArea": 1,
-    "dirt": 2,
+    "gravel": 2,
     "grass": 3,
     "dirt": 4,
     "water": 5,
@@ -57,7 +57,7 @@ class RiskLevel(Enum):
 risk_table = {
     "unlabeled": RiskLevel.ZERO,
     "pavedArea": RiskLevel.LOW,
-    "dirt": RiskLevel.LOW,
+    "grave": RiskLevel.LOW,
     "grass": RiskLevel.ZERO,
     "dirt": RiskLevel.LOW,
     "water": RiskLevel.HIGH,
