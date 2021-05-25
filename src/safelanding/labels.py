@@ -99,15 +99,13 @@ notSafe = [
     "car",
     "bicycle",
     "tree",
-    "baldTree" "obstacle",
+    "baldTree",
     "pool",
     "wall",
     "door",
-    "roof",
     "drone",
     "construction",
-    "boat",
-    "obstacle",
+    "boat"
 ]
 
 biLabelsAero = bidict(labelsAero)
