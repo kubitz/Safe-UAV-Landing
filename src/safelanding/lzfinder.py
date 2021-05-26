@@ -45,10 +45,13 @@ class LzFinder:
     def _dist_to_obs(self, lz, obstacles, img):
         posLz = lz.get("position")
         norm_dists = []
-        for ob in obstacles:
-            dist = self.getDistance(img, (ob[0], ob[1]), posLz)
-            norm_dists.append(1-dist)
-        return np.mean(norm_dists)
+        if not obstacles:
+            return 0
+        else:
+            for ob in obstacles:
+                dist = self.getDistance(img, (ob[0], ob[1]), posLz)
+                norm_dists.append(1-dist)
+            return np.mean(norm_dists)
 
     def _meets_min_safety_requirement(cls, zone_proposed, obstacles_list):
         """Checks if a proposed safety zone is breaking the min. safe distance of all the high-risk obstacles detected in an image
@@ -188,9 +191,10 @@ class LzFinder:
                 obFactor = self._dist_to_obs(lz, obstacles, riskMap)
 
             if lz["confidence"] is math.nan:
-                lz["confidence"] = (
+                lz["confidence"] = abs((
                                            weightRisk * riskFactor + weightDist * distanceFactor + weightOb * obFactor
-                                   ) / (weightRisk + weightDist + weightOb)
+                                   ) / (weightRisk + weightDist + weightOb))
+                xxx = 0
 
         lzsSorted = sorted(lzsProposals, key=lambda k: k["confidence"])
         return lzsSorted

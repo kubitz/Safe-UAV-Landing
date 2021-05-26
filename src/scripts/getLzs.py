@@ -11,12 +11,12 @@ from PIL import Image
 from safelanding.config import *
 from safelanding.lzfinder import LzFinder
 from safelanding.metrics import LzGtGenerator
-
+SIMULATE=True
 if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
     from safelanding.yolo_util import ObjectDetector
 
-HEADLESS = False
+HEADLESS = True
 
 if __name__ == "__main__":
     basePath = Path.cwd().parents[1]
@@ -114,7 +114,7 @@ if __name__ == "__main__":
                     detected_objs.append(obstacle)
             else:
                 segImg = cv.imread(segImgs[i])
-                obstacles = seq_obstacles[0]
+                obstacles = []
             start_logic = time.time()
             lzFinder = LzFinder("graz", simulate=SIMULATE)
             lzs_ranked, risk_map = lzFinder.get_ranked_lz(
