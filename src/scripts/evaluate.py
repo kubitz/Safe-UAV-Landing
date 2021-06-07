@@ -8,56 +8,64 @@ from pandas import DataFrame
 
 from safelanding.metricsPlotter import BinaryClassification, Metrics, MetricsLz, Optimum
 
-basePath = Path(__file__).parents[2]
-dataPath = basePath.joinpath("data", "imgs")
-resultPath = basePath.joinpath("data", "results")
-resultList = []
-
-for dir in resultPath.iterdir():
+basePath = Path("/home/kubitz/Documents/fyp/results")
+folders = []
+for dir in Path(basePath).iterdir():
     if dir.is_dir():
-        resultList.append(dir)
+        folders.append(dir)
+folders.sort()
+folders.pop(1)
 
-resultList.sort()
-resultList.pop(0)
-df_lzs = DataFrame()
+for folder in folders:
+    print("Processing: ", folder.stem)
+    resultPath = folder.joinpath("results")
+    resultList = []
 
-for seq in resultList:
-    pathGt = str(resultPath.joinpath(seq.stem, "gt_lzs.csv"))
-    basePath = Path(__file__).parents[2]
-    df_lz = pd.read_csv(
-        pathGt,
-        converters={"position": ast.literal_eval, "reasons": ast.literal_eval},
-    )
-    df_lzs = pd.concat([df_lzs, df_lz], ignore_index=True)
+    for dir in resultPath.iterdir():
+        if dir.is_dir():
+            resultList.append(dir)
 
+    resultList.sort()
+    resultList.pop(0)
+    df_lzs = DataFrame()
 
-opt = MetricsLz(df_lzs, threshold=0.75)
+    for seq in resultList:
+        pathGt = str(resultPath.joinpath(seq.stem, "gt_lzs.csv"))
+        basePath = Path(__file__).parents[2]
+        df_lz = pd.read_csv(
+            pathGt,
+            converters={"position": ast.literal_eval, "reasons": ast.literal_eval},
+        )
+        df_lzs = pd.concat([df_lzs, df_lz], ignore_index=True)
 
-print("reasons: ", opt.reasonsFP)
+    threshold = 0.8
+    opt = MetricsLz(df_lzs, threshold=threshold)
 
-# Visualisation with plot_metric
-y_pred = df_lzs["confidence"].tolist()
-y_gt = df_lzs["gt"].tolist()
-bc = BinaryClassification(y_gt, y_pred, labels=["Unsafe", "Safe"], threshold=0.75)
-bc.print_report()
+    print("reasons: ", opt.reasonsFP)
 
-# Figures
-plt.figure(figsize=(15, 10))
-plt.subplot2grid(shape=(2, 6), loc=(0, 0), colspan=2)
-bc.plot_roc_curve()
-plt.subplot2grid((2, 6), (0, 2), colspan=2)
-bc.plot_precision_recall_curve()
-plt.subplot2grid((2, 6), (0, 4), colspan=2)
-bc.plot_threshold()
-plt.subplot2grid((2, 6), (1, 1), colspan=2)
-bc.plot_confusion_matrix()
-plt.subplot2grid((2, 6), (1, 3), colspan=2)
-bc.plot_confusion_matrix(normalize=True)
+    # Visualisation with plot_metric
+    y_pred = df_lzs["confidence"].tolist()
+    y_gt = df_lzs["gt"].tolist()
+    bc = BinaryClassification(y_gt, y_pred, labels=["Unsafe", "Safe"], threshold=threshold)
+    bc.print_report()
 
-# Save figure
+    # Figures
+    plt.figure(figsize=(15, 10))
+    plt.subplot2grid(shape=(2, 6), loc=(0, 0), colspan=2)
+    bc.plot_roc_curve()
+    plt.subplot2grid((2, 6), (0, 2), colspan=2)
+    bc.plot_precision_recall_curve()
+    plt.subplot2grid((2, 6), (0, 4), colspan=2)
+    bc.plot_threshold()
+    plt.subplot2grid((2, 6), (1, 1), colspan=2)
+    bc.plot_confusion_matrix()
+    plt.subplot2grid((2, 6), (1, 3), colspan=2)
+    bc.plot_confusion_matrix(normalize=True)
 
-# Display Figure
-plt.show()
-plt.close()
+    # Save figure
+    plt.savefig(str(folder.parents[1].joinpath("results","gts","figures",folder.stem+"_fig.png")))
+    # Display Figure
+    plt.show()
+    plt.close()
 
-# Full report of the classification
+    # Full report of the classification

@@ -7,16 +7,18 @@ import numpy as np
 import pandas as pd
 from cv2 import cv2 as cv
 from PIL import Image
+import ast
 
 from safelanding.config import *
 from safelanding.lzfinder import LzFinder
 from safelanding.metrics import LzGtGenerator
-SIMULATE=True
+
+SIMULATE = True
 if not SIMULATE:
     from safelanding.seg_util import SegmentationEngine
     from safelanding.yolo_util import ObjectDetector
 
-HEADLESS = True
+HEADLESS = False
 
 if __name__ == "__main__":
     basePath = Path.cwd().parents[1]
@@ -47,8 +49,7 @@ if __name__ == "__main__":
     dataFolders.sort()
 
     if SIMULATE:
-        dataFolders = [dataFolders[0]]
-
+        dataFolders.pop(0)
     else:
         dataFolders.pop(0)
     if not SIMULATE:
@@ -70,14 +71,16 @@ if __name__ == "__main__":
             [(643, 488, 100)],
             [(640, 488, 100)],
         ]
-    for folder in dataFolders[:2]:
+    for folder in dataFolders:
         seq_name = folder.stem
         print("starting with ", seq_name, " ...")
-        segSimPath = str(basePath.joinpath("data", "imgs", folder.stem, "masks", "*"))
+        segSimPath = str(basePath.joinpath("data", "results", folder.stem, "masks", "*"))
         gtsPath = str(basePath.joinpath("data", "imgs", folder.stem, "gts", "*"))
         imgsPath = str(basePath.joinpath("data", "imgs", folder.stem, "images", "*"))
         rgbImgs = glob.glob(imgsPath)
         segImgs = glob.glob(segSimPath)
+        segImgs.sort()
+        rgbImgs.sort()
         resultLzs = []
         detected_objs = []
         # Vectors to store execution times
@@ -94,8 +97,8 @@ if __name__ == "__main__":
                 img_pil = cv.cvtColor(img, cv.COLOR_BGR2RGB)
                 img_pil = Image.fromarray(img_pil)
                 start_seg = time.time()
-                #segImg = segEngine.inferImage(img_pil)
-                segImg = np.zeros((1152, 768,1), np.uint8)
+                # segImg = segEngine.inferImage(img_pil)
+                segImg = np.zeros((1152, 768, 1), np.uint8)
                 end_seg = time.time()
                 segImg = np.array(segImg)
                 start_obj = time.time()
@@ -113,23 +116,42 @@ if __name__ == "__main__":
                     obstacle["id"] = fileName
                     detected_objs.append(obstacle)
             else:
-                segImg = cv.imread(segImgs[i])
+                pathObstacles = str(basePath.joinpath("data", "results", folder.stem, "obj_detected.csv"))
+                try:
+                    ob_df = pd.read_csv(
+                        pathObstacles,
+                        converters={"position": ast.literal_eval, 'id': lambda x: str(x)},
+                    )
+                    ob_list = ob_df[ob_df["id"] == fileName].to_dict("records")
+                except:
+                    ob_list = []
                 obstacles = []
+                for obstacle in ob_list:
+                    posOb = obstacle.get("box")
+                    posOb = ast.literal_eval(posOb)
+                    minDist = 100
+                    w, h = posOb[2], posOb[3]
+                    obstacles.append(
+                        [int(posOb[0] + w / 2), int(posOb[1] + h / 2), minDist]
+                    )
+                    obstacle["id"] = fileName
+                    detected_objs.append(obstacle)
+                segImg = cv.imread(segImgs[i])
             start_logic = time.time()
             lzFinder = LzFinder("graz", simulate=SIMULATE)
             lzs_ranked, risk_map = lzFinder.get_ranked_lz(
-                obstacles, img, segImg, id=fileName, use_seg=False
+                obstacles, img, segImg, id=fileName, use_seg=True
             )
             end_logic = time.time()
-            img = lzFinder.draw_lzs_obs(lzs_ranked[-5:], obstacles, img)
+            img = lzFinder.draw_lzs_obs(lzs_ranked, obstacles, img)
             resultLzs += lzs_ranked
             end_pipeline = time.time()
 
-            exec_pipeline.append(end_pipeline-start_pipeline)
-            exec_logic.append(end_logic-start_logic)
+            exec_pipeline.append(end_pipeline - start_pipeline)
+            exec_logic.append(end_logic - start_logic)
             if not SIMULATE:
-                exec_obj.append(end_obj-start_obj)
-                exec_seg.append(end_seg-start_seg)
+                exec_obj.append(end_obj - start_obj)
+                exec_seg.append(end_seg - start_seg)
             if EXTRACT_METRICS:
                 gtSeg = glob.glob(gtsPath + "*.png")
                 gtSeg.sort()
@@ -189,8 +211,8 @@ if __name__ == "__main__":
 
         dfLzs = pd.DataFrame(resultLzs)
         dfLzs.to_csv(resultPath.joinpath(seq_name, "results_lzs.csv"), index=False)
-        print("time pipeline: ", np.mean(exec_pipeline), " --- FPS:", 1/np.mean(exec_pipeline))
-        print("time logic: ", np.mean(exec_logic), " --- FPS:", 1/np.mean(exec_logic))
+        print("time pipeline: ", np.mean(exec_pipeline), " --- FPS:", 1 / np.mean(exec_pipeline))
+        print("time logic: ", np.mean(exec_logic), " --- FPS:", 1 / np.mean(exec_logic))
         if not SIMULATE:
-            print("time seg: ", np.mean(exec_seg), " --- FPS:", 1/np.mean(exec_seg))
-            print("time obj: ", np.mean(exec_obj), " --- FPS:", 1/np.mean(exec_obj))
+            print("time seg: ", np.mean(exec_seg), " --- FPS:", 1 / np.mean(exec_seg))
+            print("time obj: ", np.mean(exec_obj), " --- FPS:", 1 / np.mean(exec_obj))

@@ -57,7 +57,7 @@ class RiskLevel(Enum):
 risk_table = {
     "unlabeled": RiskLevel.ZERO,
     "pavedArea": RiskLevel.LOW,
-    "grave": RiskLevel.LOW,
+    "gravel": RiskLevel.LOW,
     "grass": RiskLevel.ZERO,
     "dirt": RiskLevel.LOW,
     "water": RiskLevel.HIGH,
