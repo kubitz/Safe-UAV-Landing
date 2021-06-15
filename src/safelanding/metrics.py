@@ -26,8 +26,11 @@ class LzGtGenerator:
             posLz = lz["position"]
             if gt == 1:
                 color = (0, 255, 0)
+                thickness=1
             else:
                 color = (0, 0, 255)
+                thickness=2
+
 
             cv.circle(img, (posLz[0], posLz[1]), radLz, color, thickness=thickness)
         return img

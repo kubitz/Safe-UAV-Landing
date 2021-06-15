@@ -15,7 +15,7 @@ from safelanding.metrics import LzGtGenerator
 from tqdm import tqdm
 
 
-HEADLESS = True
+HEADLESS = False
 basePath = Path("/home/kubitz/Documents/fyp/results")
 dataPath = Path("/home/kubitz/Documents/fyp/Safe-UAV-Landing/data/imgs")
 folders = []
@@ -35,7 +35,7 @@ for folder in folders:
     resultList.sort()
     resultList.pop(0)
 
-    for seq in tqdm(resultList):
+    for seq in tqdm(resultList[4:]):
         pathImgsGt = str(dataPath.joinpath(seq.stem, "gts", "*"))
         pathImgs = str(dataPath.joinpath(seq.stem, "images", "*"))
 
@@ -69,6 +69,7 @@ for folder in folders:
             lzsGts += lzs
 
             if not HEADLESS:
+                print("heh")
                 imgPath = rgbImgs[idx]
                 img = cv.imread(imgPath)
                 img = LzGtGenerator.draw_gt_lzs(img, lzs)
@@ -76,5 +77,5 @@ for folder in folders:
                 cv.waitKey(0)
                 cv.destroyAllWindows()
 
-        dfLzsGt = pd.DataFrame(lzsGts)
-        dfLzsGt.to_csv(resultPath.joinpath(seq.stem, "gt_lzs.csv"), index=False)
+        #dfLzsGt = pd.DataFrame(lzsGts)
+        #dfLzsGt.to_csv(resultPath.joinpath(seq.stem, "gt_lzs.csv"), index=False)

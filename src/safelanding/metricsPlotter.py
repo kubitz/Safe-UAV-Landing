@@ -25,6 +25,7 @@ from sklearn.metrics import (
     confusion_matrix,
     precision_recall_curve,
     roc_curve,
+    roc_auc_score,
 )
 
 # Code modifed from https://github.com/yohann84L/plot_metric
@@ -663,6 +664,7 @@ class BinaryClassification:
         ls_random_guess="--",
         title="Receiver Operating Characteristic",
         loc_legend="lower right",
+        max_fpr=None
     ):
         """
         Compute and plot the ROC (Receiver Operating Characteristics) curve but also AUC (Area Under The Curve).
@@ -740,7 +742,8 @@ class BinaryClassification:
         # Compute ROC Curve
         fpr, tpr, thresh = roc_curve(self.y_true, self.y_pred)
         # Compute AUC
-        roc_auc = auc(fpr, tpr)
+        partial_auc = roc_auc_score(self.y_true, self.y_pred,max_fpr=max_fpr)
+        roc_auc = roc_auc_score(self.y_true, self.y_pred,max_fpr=None)
 
         # Compute the y & x axis to trace the threshold
         idx_thresh, idy_thresh = (
@@ -754,7 +757,7 @@ class BinaryClassification:
             tpr,
             color=c_roc_curve,
             lw=linewidth,
-            label="ROC curve (area = %0.2f)" % roc_auc,
+            label="ROC curve (auc = %0.2f, partial auc =%0.2f)" % (roc_auc,partial_auc),
             linestyle=ls_roc_curve,
         )
 
@@ -817,7 +820,7 @@ class BinaryClassification:
         plt.title(title)
         plt.legend(loc=loc_legend)
 
-        return fpr, tpr, thresh, roc_auc
+        return fpr, tpr, thresh, roc_auc, partial_auc
 
     def plot_precision_recall_curve(
         self,
